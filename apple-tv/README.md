@@ -38,3 +38,5 @@ A lightweight tvOS WebView wrapper for KVideo.
 - Apple TV apps **cannot** be published to the App Store if they're just web wrappers
 - This is intended for personal sideloading only
 - For AirPlay: you can also just AirPlay from iPhone/iPad/Mac without needing this app
+
+- TV 打包指南：`docs/tv-app-packaging.md`

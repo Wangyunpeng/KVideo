@@ -104,7 +104,12 @@ class MainActivity : ComponentActivity() {
                 databaseEnabled = true
             }
 
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    injectDefaultSubscriptionIfNeeded()
+                }
+            }
             webChromeClient = object : WebChromeClient() {
                 override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                     if (view == null || callback == null) {
@@ -334,6 +339,46 @@ class MainActivity : ComponentActivity() {
         customViewCallback = null
         wasSetupVisibleBeforeFullscreen = false
         applyImmersiveMode()
+    }
+
+    private fun injectDefaultSubscriptionIfNeeded() {
+        val subscriptionUrl = BuildConfig.DEFAULT_SUBSCRIPTION_URL.trim()
+        if (!isValidUrl(subscriptionUrl)) return
+
+        val escapedUrl = subscriptionUrl
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+
+        val js = """
+            (function () {
+              try {
+                var key = 'kvideo-settings';
+                var raw = localStorage.getItem(key);
+                var settings = raw ? JSON.parse(raw) : {};
+                var list = Array.isArray(settings.subscriptions) ? settings.subscriptions : [];
+                var exists = list.some(function (item) { return item && item.url === "$escapedUrl"; });
+                if (!exists) {
+                  list.push({
+                    id: 'android_preset_' + Date.now(),
+                    name: 'Android 预置订阅源',
+                    url: "$escapedUrl",
+                    lastUpdated: 0,
+                    autoRefresh: true
+                  });
+                  settings.subscriptions = list;
+                  localStorage.setItem(key, JSON.stringify(settings));
+                }
+              } catch (_) {}
+            })();
+        """.trimIndent()
+
+        webView.post {
+            try {
+                webView.evaluateJavascript(js, null)
+            } catch (error: Throwable) {
+                Log.w(TAG, "Failed to inject default subscription", error)
+            }
+        }
     }
 
     private fun isPictureInPictureSupported(): Boolean {
