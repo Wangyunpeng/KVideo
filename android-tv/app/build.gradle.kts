@@ -10,6 +10,13 @@ val defaultKVideoUrl = providers
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
 
+val defaultSubscriptionUrl = providers
+    .gradleProperty("subscriptionUrl")
+    .orElse("https://raw.githubusercontent.com/rapier15sapper/ew/refs/heads/main/test.json")
+    .get()
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+
 android {
     namespace = "com.kvideo.tv"
     compileSdk = 34
@@ -22,6 +29,7 @@ android {
         versionName = "1.0.0"
 
         buildConfigField("String", "DEFAULT_KVIDEO_URL", "\"$defaultKVideoUrl\"")
+        buildConfigField("String", "DEFAULT_SUBSCRIPTION_URL", "\"$defaultSubscriptionUrl\"")
     }
 
     buildTypes {
